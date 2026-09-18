@@ -500,3 +500,9 @@ updateHeaderClock();
 setInterval(updateHeaderClock, 1000);
 renderElectronics();
 render();
+
+if ("serviceWorker" in navigator) {
+	navigator.serviceWorker.register("service-worker.js").catch(error => {
+		console.warn("Service worker registration failed.", error);
+	});
+}
