@@ -406,7 +406,10 @@ h2 { margin: 0; font-family: Georgia, serif; font-size: 25px; font-weight: 500; 
 .empty-state { grid-column: 1 / -1; padding: 35px; border: 1px dashed var(--line); border-radius: 14px; color: var(--muted); text-align: center; background: var(--panel); }
 
 @media (max-width: 1100px) and (min-width: 761px) {
-	.summary-grid { grid-template-columns: repeat(3, 1fr); }
+	.summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.topbar { align-items: stretch; }
+	.header-tools { flex-wrap: wrap; justify-content: flex-end; }
+	.items-grid, .electronics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 .materials-page {
@@ -1056,22 +1059,42 @@ h2 { margin: 0; font-family: Georgia, serif; font-size: 25px; font-weight: 500; 
 
 @media (max-width: 760px) {
 	.app-shell { display: block; }
-	.sidebar { padding: 17px 20px; gap: 18px; }
-	.side-nav { display: flex; overflow-x: auto; }
+	.sidebar { position: relative; z-index: 2; padding: 15px 16px 12px; gap: 15px; box-shadow: 0 5px 18px rgba(31, 65, 42, .12); }
+	.brand { min-width: 0; }
+	.brand > div { min-width: 0; }
+	.brand strong, .brand small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+	.side-nav { display: flex; gap: 5px; overflow-x: auto; margin: 0 -4px; padding: 2px 4px 5px; scrollbar-width: thin; }
 	.side-nav button { flex: 0 0 auto; padding: 9px 11px; }
+	.side-nav button.active { background: rgba(255,255,255,.16) !important; }
+	.nav-highlight { display: none; }
 	.sidebar-note { display: none; }
-	main { padding: 27px 18px 40px; }
+	main { padding: 23px 16px 36px; }
+	.topbar { flex-direction: column; gap: 18px; margin-bottom: 24px; }
+	.header-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+	.live-clock-wrap { grid-column: 1 / -1; align-items: flex-start; min-width: 0; }
+	.add-button, .electronics-add-button { width: 100%; min-height: 44px; padding-inline: 10px; }
+	h1 { font-size: clamp(30px, 9vw, 40px); }
+	.date { line-height: 1.45; }
 	.summary-grid { grid-template-columns: 1fr; gap: 10px; }
 	.summary-card { min-height: auto; padding: 15px 17px; }
 	.summary-value { margin-top: 8px; }
 	.section-head { align-items: flex-start; flex-direction: column; }
-	.tools { flex-direction: column; }
-	.filter { height: 43px; }
+	.section-head p { line-height: 1.45; }
+	.electronics-head { gap: 11px; }
+	.electronics-toolbar { padding: 12px; gap: 11px; }
+	.electronics-filters { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 3px; }
+	.electronics-filter { flex: 0 0 auto; }
+	.items-grid, .electronics-grid { grid-template-columns: 1fr; }
 	.material-form { grid-template-columns: 1fr; }
 	.utility-form { grid-template-columns: 1fr; }
 	.schedule-head { align-items: stretch; }
 	.schedule-add-button { width: 100%; }
-	.schedule-week { grid-template-columns: repeat(7, minmax(190px, 1fr)); }
+	.schedule-week { grid-template-columns: repeat(7, minmax(180px, 1fr)); margin-right: -16px; padding-right: 16px; }
+	.material-table-wrap { margin-inline: -2px; padding: 12px; }
+	.modal-backdrop { padding: 12px; }
+	.modal { max-height: calc(100vh - 24px); overflow-y: auto; padding: 19px; }
+	.form-actions { flex-direction: column; align-items: stretch; }
+	.form-actions button { width: 100%; }
 }
 
 .app-shell.custom-theme.electronics-mode .sidebar,
