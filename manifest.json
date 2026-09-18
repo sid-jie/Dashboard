@@ -1,0 +1,10 @@
+{
+  "name": "PantryBoard Inventory",
+  "short_name": "PantryBoard",
+  "description": "Pantry and electronics inventory dashboard.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7faf5",
+  "theme_color": "#1f5235",
+  "orientation": "portrait-primary"
+}

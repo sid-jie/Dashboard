@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>PantryBoard | Materials Dashboard</title>
+	<link rel="manifest" href="manifest.json">
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<div class="app-shell">
+		<aside class="sidebar">
+			<div class="brand">
+				<div class="brand-mark">+</div>
+				<div><strong>PantryBoard</strong><small>Materials inventory</small></div>
+			</div>
+
+			<nav class="side-nav" aria-label="Main navigation">
+				<button class="active" type="button" data-page="overview"><span>▦</span> Overview</button>
+				<button type="button" data-page="all"><span>▤</span> All materials</button>
+				<button type="button" data-page="pantry"><span>▥</span> Pantry</button>
+				<button type="button" data-page="electronics"><span>⚡</span> Electronics</button>
+			</nav>
+
+			<div class="sidebar-note"><strong>Stock made simple</strong>Keep a quick count of everyday supplies and update quantities as items come in or go out.</div>
+		</aside>
+
+		<main>
+			<header class="topbar">
+				<div>
+					<p id="headerDate" class="eyebrow">Monday, 18 September 2026</p>
+					<h1 id="greetingText">Good morning, Engr.</h1>
+					<p class="date">Here is your materials snapshot for today.</p>
+				</div>
+				<div class="header-tools">
+					<div class="live-clock-wrap" aria-live="polite">
+						<span class="clock-label">Current time</span>
+						<strong id="liveClock">--:--:--</strong>
+					</div>
+					<button class="add-button" type="button" id="addItemButton">＋ Add material</button>
+					<button class="electronics-add-button" type="button" id="addElectronicsButton" hidden>＋ Add component</button>
+				</div>
+			</header>
+
+			<section id="overviewSection" aria-labelledby="dashboard-heading">
+				<div class="section-head">
+					<div><h2 id="dashboard-heading">Inventory dashboard</h2><p>See the current status of your pantry and electronics.</p></div>
+				</div>
+				<div class="summary-grid" aria-label="Inventory summary">
+					<article class="summary-card highlight"><div class="summary-label"><span>Pantry items</span><span>●</span></div><strong class="summary-value" id="totalMaterials">0</strong><span class="summary-detail">items in your pantry</span></article>
+					<article class="summary-card"><div class="summary-label"><span>Pantry categories</span><span>◫</span></div><strong class="summary-value" id="totalCategories">0</strong><span class="summary-detail">types of materials</span></article>
+					<article class="summary-card"><div class="summary-label"><span>Pantry running low</span><span>!</span></div><strong class="summary-value" id="lowStock">0</strong><span class="summary-detail">items need attention</span></article>
+					<article class="summary-card electronics-summary"><div class="summary-label"><span>Electronics items</span><span>⚡</span></div><strong class="summary-value" id="electronicsTotal">0</strong><span class="summary-detail">components in stock</span></article>
+					<article class="summary-card electronics-summary"><div class="summary-label"><span>Electronics low</span><span>!</span></div><strong class="summary-value" id="electronicsLowStock">0</strong><span class="summary-detail">components need attention</span></article>
+				</div>
+				<div class="dashboard-list">
+					<div class="section-head"><div><h2>Electronics list</h2><p>Your saved electronic components and current stock.</p></div></div>
+					<div class="dashboard-electronics-list" id="electronicsDashboardList"></div>
+				</div>
+			</section>
+
+			<section class="pantry-page visible" aria-labelledby="materials-heading" id="pantrySection">
+				<div class="section-head">
+					<div><h2 id="materials-heading">Materials</h2><p>Adjust your stock count with the controls on each item.</p></div>
+				</div>
+				<div class="items-grid" id="itemsGrid"></div>
+			</section>
+
+			<section class="materials-page" id="allMaterialsPage" aria-labelledby="allMaterialsHeading">
+				<div class="section-head">
+					<div><h2 id="allMaterialsHeading">All materials</h2><p>Review every item in your inventory.</p></div>
+					<div class="view-controls" aria-label="Inventory view options">
+						<button class="view-btn active" type="button" data-view="grid">Grid</button>
+						<button class="view-btn" type="button" data-view="list">List</button>
+					</div>
+				</div>
+				<div class="material-table-wrap">
+					<table class="material-table">
+						<thead>
+							<tr>
+								<th>Item</th>
+								<th>Category</th>
+								<th>Qty</th>
+								<th>Price</th>
+								<th>Status</th>
+							</tr>
+						</thead>
+						<tbody id="materialsTableBody"></tbody>
+					</table>
+				</div>
+			</section>
+
+			<section class="electronics-page" id="electronicsSection" aria-labelledby="electronicsHeading">
+				<div class="section-head electronics-head">
+					<div><h2 id="electronicsHeading">Electronics components</h2><p>Track your boards, modules, sensors, and accessories.</p></div>
+					<div class="electronics-meta"><span id="electronicsCount">0 items</span></div>
+				</div>
+
+				<div class="electronics-toolbar">
+					<div class="electronics-search">
+						<span>⌕</span>
+						<input id="electronicsSearch" type="text" placeholder="Search components...">
+					</div>
+					<div class="electronics-filters">
+						<button class="electronics-filter active" type="button" data-category="all">All</button>
+						<button class="electronics-filter" type="button" data-category="microcontroller">Microcontroller</button>
+						<button class="electronics-filter" type="button" data-category="sensor">Sensor</button>
+						<button class="electronics-filter" type="button" data-category="power">Power</button>
+						<button class="electronics-filter" type="button" data-category="connectivity">Connectivity</button>
+					</div>
+				</div>
+
+				<div class="electronics-grid" id="electronicsGrid"></div>
+			</section>
+		</main>
+	</div>
+
+	<div class="modal-backdrop" id="materialModal" aria-hidden="true">
+		<div class="modal" role="dialog" aria-modal="true" aria-labelledby="materialModalTitle">
+			<div class="modal-header">
+				<h3 id="materialModalTitle">Add material</h3>
+				<button class="close-modal" type="button" id="closeModalButton" aria-label="Close add material form">×</button>
+			</div>
+
+			<form id="addMaterialForm" class="material-form">
+				<div class="field full">
+					<label for="materialName">Material name</label>
+					<input id="materialName" name="name" type="text" placeholder="e.g. Cooking oil" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" required>
+				</div>
+				<div class="field full image-field"><label for="materialImage">Item picture <span>(optional PNG)</span></label><input id="materialImage" name="image" type="file" accept="image/png"><small>Select a PNG image from your computer.</small><img id="materialImagePreview" class="form-image-preview" alt="Picture preview" hidden></div>
+
+				<div class="field">
+					<label for="materialCategory">Category</label>
+					<select id="materialCategory" name="category" required>
+						<option value="">Select</option>
+					</select>
+				</div>
+
+				<div class="field">
+					<label for="materialQuantity">Quantity</label>
+					<input id="materialQuantity" name="quantity" type="number" min="0" value="1" required>
+				</div>
+
+				<div class="field">
+					<label for="materialUnit">Unit</label>
+					<input id="materialUnit" name="unit" type="text" placeholder="can, pack, bottle" required>
+				</div>
+
+				<div class="field">
+					<label for="materialPrice">Price</label>
+					<input id="materialPrice" name="price" type="text" placeholder="₱25" required>
+				</div>
+
+
+				<div class="form-actions full">
+					<button class="primary-btn" type="submit">Save material</button>
+					<button class="secondary-btn" type="button" id="cancelMaterialButton">Cancel</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<div class="modal-backdrop" id="electronicsModal" aria-hidden="true">
+		<div class="modal" role="dialog" aria-modal="true" aria-labelledby="electronicsModalTitle">
+			<div class="modal-header">
+				<h3 id="electronicsModalTitle">Add component</h3>
+				<button class="close-modal" type="button" id="closeElectronicsModalButton" aria-label="Close add component form">×</button>
+			</div>
+			<form id="addElectronicsForm" class="material-form">
+				<div class="field full"><label for="electronicsName">Component name</label><input id="electronicsName" name="name" type="text" placeholder="e.g. Arduino Uno" required></div>
+				<div class="field"><label for="electronicsCategory">Category</label><select id="electronicsCategory" name="category" required><option value="">Select</option><option value="microcontroller">Microcontroller</option><option value="sensor">Sensor</option><option value="power">Power</option><option value="connectivity">Connectivity</option><option value="prototype">Prototype</option><option value="display">Display</option><option value="actuator">Actuator</option></select></div>
+				<div class="field"><label for="electronicsType">Type</label><input id="electronicsType" name="type" type="text" placeholder="e.g. Sensor" required></div>
+				<div class="field"><label for="electronicsStock">Stock</label><input id="electronicsStock" name="stock" type="number" min="0" value="1" required></div>
+				<div class="field"><label for="electronicsUnit">Unit</label><input id="electronicsUnit" name="unit" type="text" placeholder="pcs, set, pack" required></div>
+				<div class="field full"><label for="electronicsPrice">Price</label><input id="electronicsPrice" name="price" type="text" placeholder="₱250" required></div>
+				<div class="field full image-field"><label for="electronicsImage">Component picture <span>(optional PNG)</span></label><input id="electronicsImage" name="image" type="file" accept="image/png"><small>Select a PNG image from your computer.</small><img id="electronicsImagePreview" class="form-image-preview" alt="Picture preview" hidden></div>
+				<div class="form-actions full"><button class="primary-btn" type="submit">Save component</button><button class="secondary-btn" type="button" id="cancelElectronicsButton">Cancel</button></div>
+			</form>
+		</div>
+	</div>
+
+	<script src="script.js"></script>
+</body>
+</html>
