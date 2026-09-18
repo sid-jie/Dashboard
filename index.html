@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>PantryBoard | Materials Dashboard</title>
+	<title>MyDashBoard | Materials Dashboard</title>
 	<link rel="manifest" href="manifest.json">
 	<link rel="stylesheet" href="style.css">
 </head>
@@ -11,31 +11,35 @@
 	<div class="app-shell">
 		<aside class="sidebar">
 			<div class="brand">
-				<div class="brand-mark">+</div>
-				<div><strong>PantryBoard</strong><small>Materials inventory</small></div>
+				<button class="brand-mark" type="button" id="navigationManagerButton" aria-label="Manage navigation tabs" title="Add or remove navigation tabs">+</button>
+				<div><strong>MyDashBoard</strong><small>Materials inventory</small></div>
 			</div>
 
 			<nav class="side-nav" aria-label="Main navigation">
+				<span class="nav-highlight" id="navHighlight" aria-hidden="true"></span>
 				<button class="active" type="button" data-page="overview"><span>▦</span> Overview</button>
 				<button type="button" data-page="all"><span>▤</span> All materials</button>
 				<button type="button" data-page="pantry"><span>▥</span> Pantry</button>
 				<button type="button" data-page="electronics"><span>⚡</span> Electronics</button>
+				<button type="button" data-page="schedule"><span>▣</span> Schedule</button>
+				<button type="button" data-page="todo"><span>☑</span> To-do list</button>
+				<button type="button" data-page="notes"><span>▰</span> Notes</button>
 			</nav>
 
-			<div class="sidebar-note"><strong>Stock made simple</strong>Keep a quick count of everyday supplies and update quantities as items come in or go out.</div>
+			<div class="sidebar-note"><strong>Stock made simple</strong><span class="sidebar-note-copy">Keep a quick count of everyday supplies and update quantities as items come in or go out.</span></div>
 		</aside>
 
 		<main>
 			<header class="topbar">
 				<div>
 					<p id="headerDate" class="eyebrow">Monday, 18 September 2026</p>
-					<h1 id="greetingText">Good morning, Engr.</h1>
+					<h1 id="greetingText"><span id="dayGreeting">Good morning,</span> <span id="greetingName" contenteditable="true" role="textbox" aria-label="Editable name" title="Click to edit your name">Engr.</span></h1>
 					<p class="date">Here is your materials snapshot for today.</p>
 				</div>
 				<div class="header-tools">
 					<div class="live-clock-wrap" aria-live="polite">
 						<span class="clock-label">Current time</span>
-						<strong id="liveClock">--:--:--</strong>
+						<strong id="liveClock"><span id="clockHours">--</span><span class="clock-separator">:</span><span id="clockMinutes">--</span><span class="clock-separator">:</span><span id="clockSeconds">--</span> <span id="clockPeriod">--</span></strong>
 					</div>
 					<button class="add-button" type="button" id="addItemButton">＋ Add material</button>
 					<button class="electronics-add-button" type="button" id="addElectronicsButton" hidden>＋ Add component</button>
@@ -48,20 +52,15 @@
 				</div>
 				<div class="summary-grid" aria-label="Inventory summary">
 					<article class="summary-card highlight"><div class="summary-label"><span>Pantry items</span><span>●</span></div><strong class="summary-value" id="totalMaterials">0</strong><span class="summary-detail">items in your pantry</span></article>
-					<article class="summary-card"><div class="summary-label"><span>Pantry categories</span><span>◫</span></div><strong class="summary-value" id="totalCategories">0</strong><span class="summary-detail">types of materials</span></article>
 					<article class="summary-card"><div class="summary-label"><span>Pantry running low</span><span>!</span></div><strong class="summary-value" id="lowStock">0</strong><span class="summary-detail">items need attention</span></article>
 					<article class="summary-card electronics-summary"><div class="summary-label"><span>Electronics items</span><span>⚡</span></div><strong class="summary-value" id="electronicsTotal">0</strong><span class="summary-detail">components in stock</span></article>
 					<article class="summary-card electronics-summary"><div class="summary-label"><span>Electronics low</span><span>!</span></div><strong class="summary-value" id="electronicsLowStock">0</strong><span class="summary-detail">components need attention</span></article>
 				</div>
-				<div class="dashboard-list">
-					<div class="section-head"><div><h2>Electronics list</h2><p>Your saved electronic components and current stock.</p></div></div>
-					<div class="dashboard-electronics-list" id="electronicsDashboardList"></div>
-				</div>
 			</section>
 
-			<section class="pantry-page visible" aria-labelledby="materials-heading" id="pantrySection">
+			<section class="pantry-page visible" aria-labelledby="consumables-heading" id="pantrySection">
 				<div class="section-head">
-					<div><h2 id="materials-heading">Materials</h2><p>Adjust your stock count with the controls on each item.</p></div>
+					<div><h2 id="consumables-heading">Consumables</h2><p>Adjust your consumable stock count with the controls on each item.</p></div>
 				</div>
 				<div class="items-grid" id="itemsGrid"></div>
 			</section>
@@ -69,10 +68,6 @@
 			<section class="materials-page" id="allMaterialsPage" aria-labelledby="allMaterialsHeading">
 				<div class="section-head">
 					<div><h2 id="allMaterialsHeading">All materials</h2><p>Review every item in your inventory.</p></div>
-					<div class="view-controls" aria-label="Inventory view options">
-						<button class="view-btn active" type="button" data-view="grid">Grid</button>
-						<button class="view-btn" type="button" data-view="list">List</button>
-					</div>
 				</div>
 				<div class="material-table-wrap">
 					<table class="material-table">
@@ -112,6 +107,26 @@
 
 				<div class="electronics-grid" id="electronicsGrid"></div>
 			</section>
+
+			<section class="schedule-page" id="scheduleSection" aria-labelledby="scheduleHeading">
+				<div class="section-head schedule-head">
+					<div><h2 id="scheduleHeading">Weekly school schedule</h2></div>
+					<button class="schedule-add-button" type="button" id="addScheduleButton">＋ Add subject</button>
+				</div>
+				<div class="schedule-week" id="scheduleWeek"></div>
+			</section>
+
+			<section class="utility-page" id="todoSection" aria-labelledby="todoHeading">
+				<div class="section-head utility-head"><div><h2 id="todoHeading">To-do list</h2><p>Keep track of tasks for school and your inventory.</p></div></div>
+				<form class="utility-form" id="todoForm"><input id="todoInput" type="text" placeholder="Add a task..." autocomplete="off" required><button class="primary-btn" type="submit">＋ Add task</button></form>
+				<div class="utility-list" id="todoList"></div>
+			</section>
+
+			<section class="utility-page" id="notesSection" aria-labelledby="notesHeading">
+				<div class="section-head utility-head"><div><h2 id="notesHeading">Notes</h2><p>Write down reminders, ideas, and class details.</p></div></div>
+				<form class="note-form" id="noteForm"><input id="noteTitle" type="text" placeholder="Note title" autocomplete="off" required><textarea id="noteText" placeholder="Write your note..." rows="5" required></textarea><button class="primary-btn" type="submit">＋ Add note</button></form>
+				<div class="notes-list" id="notesList"></div>
+			</section>
 		</main>
 	</div>
 
@@ -131,9 +146,7 @@
 
 				<div class="field">
 					<label for="materialCategory">Category</label>
-					<select id="materialCategory" name="category" required>
-						<option value="">Select</option>
-					</select>
+					<div class="category-picker"><input id="materialCategory" name="category" type="text" placeholder="Type to search categories" autocomplete="off" required><div class="category-suggestions" id="categorySuggestions" role="listbox" aria-label="Category suggestions"></div></div>
 				</div>
 
 				<div class="field">
@@ -176,6 +189,35 @@
 				<div class="field full image-field"><label for="electronicsImage">Component picture <span>(optional PNG)</span></label><input id="electronicsImage" name="image" type="file" accept="image/png"><small>Select a PNG image from your computer.</small><img id="electronicsImagePreview" class="form-image-preview" alt="Picture preview" hidden></div>
 				<div class="form-actions full"><button class="primary-btn" type="submit">Save component</button><button class="secondary-btn" type="button" id="cancelElectronicsButton">Cancel</button></div>
 			</form>
+		</div>
+	</div>
+
+	<div class="modal-backdrop" id="scheduleModal" aria-hidden="true">
+		<div class="modal" role="dialog" aria-modal="true" aria-labelledby="scheduleModalTitle">
+			<div class="modal-header">
+				<h3 id="scheduleModalTitle">Add subject</h3>
+				<button class="close-modal" type="button" id="closeScheduleModalButton" aria-label="Close schedule form">×</button>
+			</div>
+			<form id="scheduleForm" class="material-form">
+				<div class="field full"><label for="scheduleSubject">Subject</label><input id="scheduleSubject" name="subject" type="text" placeholder="e.g. Engineering Mathematics" required></div>
+				<div class="field"><label for="scheduleDate">Date</label><input id="scheduleDate" name="date" type="date" required></div>
+				<div class="field"><label for="scheduleStartTime">Time in</label><input id="scheduleStartTime" name="startTime" type="time" required></div>
+				<div class="field"><label for="scheduleEndTime">Time out</label><input id="scheduleEndTime" name="endTime" type="time" required></div>
+				<div class="field full"><label for="scheduleRoom">Room or details <span>(optional)</span></label><input id="scheduleRoom" name="details" type="text" placeholder="e.g. Room 204 or online class"></div>
+				<div class="form-actions full"><button class="primary-btn" type="submit" id="saveScheduleButton">Save subject</button><button class="secondary-btn" type="button" id="cancelScheduleButton">Cancel</button></div>
+			</form>
+		</div>
+	</div>
+
+	<div class="modal-backdrop" id="navigationModal" aria-hidden="true">
+		<div class="modal navigation-modal" role="dialog" aria-modal="true" aria-labelledby="navigationModalTitle">
+			<div class="modal-header">
+				<h3 id="navigationModalTitle">Manage navigation</h3>
+				<button class="close-modal" type="button" id="closeNavigationModalButton" aria-label="Close navigation manager">×</button>
+			</div>
+			<p class="navigation-modal-note">Choose which existing tabs appear in your sidebar.</p>
+			<div class="navigation-options" id="navigationOptions"></div>
+			<button class="secondary-btn navigation-done-button" type="button" id="closeNavigationDoneButton">Done</button>
 		</div>
 	</div>
 

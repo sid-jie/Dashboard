@@ -1,4 +1,4 @@
-const CACHE_NAME = "pantryboard-v1";
+const CACHE_NAME = "mydashboard-v2";
 const APP_FILES = [
   "./",
   "./index.html",

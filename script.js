@@ -1,5 +1,33 @@
 const STORAGE_KEY = "pantryboard-materials-v1";
 const ELECTRONICS_STORAGE_KEY = "pantryboard-electronics-v1";
+const SCHEDULE_STORAGE_KEY = "pantryboard-schedule-v1";
+const TODO_STORAGE_KEY = "mydashboard-todos-v1";
+const NOTES_STORAGE_KEY = "mydashboard-notes-v1";
+const NAVIGATION_COLORS_STORAGE_KEY = "mydashboard-navigation-colors-v1";
+const GREETING_STORAGE_KEY = "mydashboard-greeting-v1";
+const NAVIGATION_STORAGE_KEY = "mydashboard-navigation-v1";
+const pantryCategories = [
+	"Beverages",
+	"Canned goods",
+	"Dry goods",
+	"Snacks",
+	"Fruits",
+	"Vegetables",
+	"Meat",
+	"Seafood",
+	"Dairy",
+	"Bakery",
+	"Frozen foods",
+	"Condiments",
+	"Spices",
+	"Grains",
+	"Pasta",
+	"Cooking essentials",
+	"Breakfast foods",
+	"Sweets",
+	"Household supplies",
+	"Personal care"
+];
 const defaultMaterials = [
 	{ id: 1, name: "Corned beef", category: "Canned goods", quantity: 18, unit: "can", price: "₱48", icon: "🥫" },
 	{ id: 2, name: "Sardines", category: "Canned goods", quantity: 12, unit: "can", price: "₱27", icon: "🐟" },
@@ -20,32 +48,63 @@ const defaultMaterials = [
 
 let materials = loadMaterials();
 let electronicsItems = loadElectronics();
+let scheduleEntries = loadSchedule();
+let todoEntries = loadStoredList(TODO_STORAGE_KEY);
+let noteEntries = loadStoredList(NOTES_STORAGE_KEY);
+let editingScheduleId = null;
 
 function loadElectronics() {
 	try {
 		const saved = JSON.parse(localStorage.getItem(ELECTRONICS_STORAGE_KEY));
-		if (Array.isArray(saved) && saved.length) return saved;
+		if (Array.isArray(saved)) return saved;
 	} catch (error) {
 		console.warn("Unable to load saved electronics.", error);
 	}
-	return [
-	{ id: 1, name: "ESP32", category: "microcontroller", type: "Microcontroller", stock: 8, unit: "pcs", price: "₱250", icon: "📡" },
-	{ id: 2, name: "Arduino Uno", category: "microcontroller", type: "Microcontroller", stock: 5, unit: "pcs", price: "₱480", icon: "🔧" },
-	{ id: 3, name: "IR Sensor", category: "sensor", type: "Sensor", stock: 12, unit: "pcs", price: "₱65", icon: "📡" },
-	{ id: 4, name: "HC-05 Bluetooth", category: "connectivity", type: "Connectivity", stock: 4, unit: "pcs", price: "₱200", icon: "📶" },
-	{ id: 5, name: "Breadboard", category: "prototype", type: "Prototype", stock: 17, unit: "pcs", price: "₱120", icon: "🧩" },
-	{ id: 6, name: "Resistor Kit", category: "power", type: "Power", stock: 3, unit: "set", price: "₱180", icon: "⚙️" },
-	{ id: 7, name: "LED Strip", category: "display", type: "Display", stock: 9, unit: "roll", price: "₱260", icon: "💡" },
-	{ id: 8, name: "LM2596 Module", category: "power", type: "Power", stock: 6, unit: "pcs", price: "₱150", icon: "🔋" },
-	{ id: 9, name: "LDR Sensor", category: "sensor", type: "Sensor", stock: 10, unit: "pcs", price: "₱70", icon: "🌗" },
-	{ id: 10, name: "OLED Display", category: "display", type: "Display", stock: 7, unit: "pcs", price: "₱220", icon: "🖥️" },
-	{ id: 11, name: "Jumper Wires", category: "connectivity", type: "Connectivity", stock: 14, unit: "pack", price: "₱55", icon: "🔌" },
-	{ id: 12, name: "Servo Motor", category: "actuator", type: "Actuator", stock: 2, unit: "pcs", price: "₱310", icon: "🤖" }
-];
+	return [];
 }
 
 function saveElectronics() {
 	localStorage.setItem(ELECTRONICS_STORAGE_KEY, JSON.stringify(electronicsItems));
+}
+
+function loadSchedule() {
+	try {
+		const saved = JSON.parse(localStorage.getItem(SCHEDULE_STORAGE_KEY));
+		if (Array.isArray(saved)) return saved;
+	} catch (error) {
+		console.warn("Unable to load saved schedule.", error);
+	}
+	return [];
+}
+
+function saveSchedule() {
+	localStorage.setItem(SCHEDULE_STORAGE_KEY, JSON.stringify(scheduleEntries));
+}
+
+function loadStoredList(storageKey) {
+	try {
+		const saved = JSON.parse(localStorage.getItem(storageKey));
+		return Array.isArray(saved) ? saved : [];
+	} catch (error) {
+		console.warn(`Unable to load ${storageKey}.`, error);
+		return [];
+	}
+}
+
+function saveStoredList(storageKey, entries) {
+	localStorage.setItem(storageKey, JSON.stringify(entries));
+}
+
+function saveAllData() {
+	try {
+		saveMaterials();
+		saveElectronics();
+		saveSchedule();
+		saveStoredList(TODO_STORAGE_KEY, todoEntries);
+		saveStoredList(NOTES_STORAGE_KEY, noteEntries);
+	} catch (error) {
+		console.warn("Unable to save all dashboard data.", error);
+	}
 }
 let activeElectronicsFilter = "all";
 
@@ -54,33 +113,134 @@ const pantrySection = document.getElementById("pantrySection");
 const allMaterialsPage = document.getElementById("allMaterialsPage");
 const electronicsSection = document.getElementById("electronicsSection");
 const sidebarButtons = document.querySelectorAll(".side-nav button");
+const navHighlight = document.getElementById("navHighlight");
 const grid = document.getElementById("itemsGrid");
 const materialModal = document.getElementById("materialModal");
 const addMaterialForm = document.getElementById("addMaterialForm");
 const materialCategory = document.getElementById("materialCategory");
+const categorySuggestions = document.getElementById("categorySuggestions");
 const headerDate = document.getElementById("headerDate");
 const liveClock = document.getElementById("liveClock");
+const dayGreeting = document.getElementById("dayGreeting");
+const greetingName = document.getElementById("greetingName");
+const clockHours = document.getElementById("clockHours");
+const clockMinutes = document.getElementById("clockMinutes");
+const clockSeconds = document.getElementById("clockSeconds");
+const clockPeriod = document.getElementById("clockPeriod");
 const greetingText = document.getElementById("greetingText");
 const electronicsGrid = document.getElementById("electronicsGrid");
 const electronicsSearch = document.getElementById("electronicsSearch");
 const electronicsCount = document.getElementById("electronicsCount");
 const electronicsFilters = document.querySelectorAll(".electronics-filter");
 const appShell = document.querySelector(".app-shell");
-const electronicsDashboardList = document.getElementById("electronicsDashboardList");
 const pageDescription = document.querySelector(".date");
 const electronicsModal = document.getElementById("electronicsModal");
 const addElectronicsForm = document.getElementById("addElectronicsForm");
 const addItemButton = document.getElementById("addItemButton");
 const addElectronicsButton = document.getElementById("addElectronicsButton");
+const mainContent = document.querySelector("main");
+const savedGreeting = localStorage.getItem(GREETING_STORAGE_KEY);
+
+if (savedGreeting && !/^Good (morning|afternoon|evening),?\s*Engr\.?$/i.test(savedGreeting)) {
+	greetingName.textContent = savedGreeting;
+} else if (savedGreeting) {
+	localStorage.removeItem(GREETING_STORAGE_KEY);
+}
+const scheduleSection = document.getElementById("scheduleSection");
+const scheduleWeek = document.getElementById("scheduleWeek");
+const scheduleModal = document.getElementById("scheduleModal");
+const scheduleForm = document.getElementById("scheduleForm");
+const scheduleModalTitle = document.getElementById("scheduleModalTitle");
+const saveScheduleButton = document.getElementById("saveScheduleButton");
+const todoSection = document.getElementById("todoSection");
+const notesSection = document.getElementById("notesSection");
+const todoList = document.getElementById("todoList");
+const notesList = document.getElementById("notesList");
+const navigationManagerButton = document.getElementById("navigationManagerButton");
+const navigationModal = document.getElementById("navigationModal");
+const navigationOptions = document.getElementById("navigationOptions");
+const navigationPages = [
+	{ id: "overview", label: "Overview", icon: "▦" },
+	{ id: "all", label: "All materials", icon: "▤" },
+	{ id: "pantry", label: "Pantry", icon: "▥" },
+	{ id: "electronics", label: "Electronics", icon: "⚡" },
+	{ id: "schedule", label: "Schedule", icon: "▣" },
+	{ id: "todo", label: "To-do list", icon: "☑" },
+	{ id: "notes", label: "Notes", icon: "▰" }
+];
+
+let visibleNavigationPages = loadVisibleNavigationPages();
+let navigationColors = loadNavigationColors();
+
+function loadVisibleNavigationPages() {
+	try {
+		const saved = JSON.parse(localStorage.getItem(NAVIGATION_STORAGE_KEY));
+		if (Array.isArray(saved)) return navigationPages.map(page => page.id).filter(id => saved.includes(id));
+	} catch (error) {
+		console.warn("Unable to load navigation settings.", error);
+	}
+	return navigationPages.map(page => page.id);
+}
+
+function saveVisibleNavigationPages() {
+	localStorage.setItem(NAVIGATION_STORAGE_KEY, JSON.stringify(visibleNavigationPages));
+}
+
+function loadNavigationColors() {
+	const defaults = {
+		overview: "#2e7048",
+		all: "#4d7560",
+		pantry: "#2e7048",
+		electronics: "#1f5de8",
+		schedule: "#e67e35",
+		todo: "#7a5bb5",
+		notes: "#c56836"
+	};
+	try {
+		const saved = JSON.parse(localStorage.getItem(NAVIGATION_COLORS_STORAGE_KEY));
+		return { ...defaults, ...(saved && typeof saved === "object" ? saved : {}) };
+	} catch (error) {
+		console.warn("Unable to load navigation colors.", error);
+		return defaults;
+	}
+}
+
+function saveNavigationColors() {
+	localStorage.setItem(NAVIGATION_COLORS_STORAGE_KEY, JSON.stringify(navigationColors));
+}
+
+function renderNavigationOptions() {
+	navigationOptions.innerHTML = navigationPages.map(page => `<label class="navigation-option"><input type="checkbox" data-navigation-page="${page.id}" ${visibleNavigationPages.includes(page.id) ? "checked" : ""}><span>${page.icon}</span><strong>${page.label}</strong><input class="navigation-color" type="color" value="${navigationColors[page.id]}" data-navigation-color="${page.id}" aria-label="Choose ${page.label} color"></label>`).join("");
+}
+
+function applyNavigationVisibility() {
+	sidebarButtons.forEach(button => {
+		button.hidden = !visibleNavigationPages.includes(button.dataset.page);
+	});
+}
+
+function applyNavigationColors() {
+	const activePage = document.querySelector(".side-nav button.active")?.dataset.page || "overview";
+	const activeColor = navigationColors[activePage] || "#2e7048";
+	appShell.classList.add("custom-theme");
+	appShell.style.setProperty("--tab-color", activeColor);
+	navHighlight.style.setProperty("--highlight-color", activeColor);
+	requestAnimationFrame(() => {
+		const activeButton = document.querySelector(".side-nav button.active");
+		if (!activeButton) return;
+		navHighlight.style.height = `${activeButton.offsetHeight}px`;
+		navHighlight.style.transform = `translateY(${activeButton.offsetTop}px)`;
+	});
+}
 
 function loadMaterials() {
 	try {
 		const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-		if (Array.isArray(saved) && saved.length) return saved;
+		if (Array.isArray(saved)) return saved;
 	} catch (error) {
 		console.warn("Unable to load saved materials.", error);
 	}
-	return [...defaultMaterials];
+	return [];
 }
 
 function saveMaterials() {
@@ -95,24 +255,21 @@ function updateHeaderClock() {
 		month: "long",
 		day: "numeric"
 	});
-	const timeFormatter = new Intl.DateTimeFormat("en-US", {
-		hour: "2-digit",
-		minute: "2-digit",
-		second: "2-digit",
-		hour12: true
-	});
-
 	headerDate.textContent = dateFormatter.format(now);
-	liveClock.textContent = timeFormatter.format(now);
+	updateClockSegment(clockHours, String((now.getHours() % 12) || 12).padStart(2, "0"));
+	updateClockSegment(clockMinutes, String(now.getMinutes()).padStart(2, "0"));
+	updateClockSegment(clockSeconds, String(now.getSeconds()).padStart(2, "0"));
+	updateClockSegment(clockPeriod, now.getHours() < 12 ? "AM" : "PM");
+	dayGreeting.textContent = now.getHours() < 12 ? "Good morning," : now.getHours() < 18 ? "Good afternoon," : "Good evening,";
 
-	const hour = now.getHours();
-	if (hour < 12) {
-		greetingText.textContent = "Good morning, Engr.";
-	} else if (hour < 18) {
-		greetingText.textContent = "Good afternoon, Engr.";
-	} else {
-		greetingText.textContent = "Good evening, Engr.";
-	}
+}
+
+function updateClockSegment(segment, value) {
+	if (segment.textContent === value) return;
+	segment.textContent = value;
+	segment.classList.remove("clock-tick");
+	void segment.offsetWidth;
+	segment.classList.add("clock-tick");
 }
 
 function formatPeso(value) {
@@ -171,10 +328,20 @@ function previewImage(input, preview) {
 }
 
 function populateCategoryOptions() {
-	const categories = [...new Set(materials.map(item => item.category))].sort();
+	const savedCategories = [...new Set(materials.map(item => item.category).filter(Boolean))];
+	const standardCategories = [...new Set(pantryCategories)].sort();
+	const extraCategories = savedCategories.filter(category => !standardCategories.includes(category)).sort();
 	const currentFormValue = materialCategory.value;
-	materialCategory.innerHTML = '<option value="">Select</option>' + categories.map(category => `<option value="${category}">${category}</option>`).join("") + '<option value="custom">Custom category</option>';
-	materialCategory.value = categories.includes(currentFormValue) ? currentFormValue : "";
+	categorySuggestions.dataset.categories = JSON.stringify([...standardCategories, ...extraCategories]);
+	materialCategory.value = currentFormValue;
+}
+
+function renderCategorySuggestions() {
+	const categories = JSON.parse(categorySuggestions.dataset.categories || "[]");
+	const query = materialCategory.value.trim().toLowerCase();
+	const matches = categories.filter(category => category.toLowerCase().includes(query));
+	categorySuggestions.innerHTML = matches.map(category => `<button type="button" role="option" data-category-value="${escapeHtml(category)}">${escapeHtml(category)}</button>`).join("");
+	categorySuggestions.classList.toggle("open", matches.length > 0);
 }
 
 function fillCustomCategory() {
@@ -225,8 +392,103 @@ function closeElectronicsModal() {
 	document.getElementById("electronicsImagePreview").hidden = true;
 }
 
+function getWeekDates() {
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+	const monday = new Date(today);
+	const dayOffset = (today.getDay() + 6) % 7;
+	monday.setDate(today.getDate() - dayOffset);
+	return Array.from({ length: 7 }, (_, index) => {
+		const date = new Date(monday);
+		date.setDate(monday.getDate() + index);
+		return date;
+	});
+}
+
+function formatScheduleDate(date, options) {
+	return new Intl.DateTimeFormat("en-US", options).format(date);
+}
+
+function toLocalDateValue(date) {
+	const year = date.getFullYear();
+	const month = String(date.getMonth() + 1).padStart(2, "0");
+	const day = String(date.getDate()).padStart(2, "0");
+	return `${year}-${month}-${day}`;
+}
+
+function formatScheduleTime(time) {
+	if (!time) return "";
+	const [hours, minutes] = time.split(":").map(Number);
+	if (Number.isNaN(hours) || Number.isNaN(minutes)) return time;
+	const period = hours >= 12 ? "PM" : "AM";
+	const displayHours = hours % 12 || 12;
+	return `${displayHours}:${String(minutes).padStart(2, "0")} ${period}`;
+}
+
+function renderSchedule() {
+	const weekDates = getWeekDates();
+	scheduleWeek.innerHTML = weekDates.map((date, dayIndex) => {
+		const entries = scheduleEntries.filter(entry => entry.dayIndex === dayIndex).sort((first, second) => (first.startTime || first.time).localeCompare(second.startTime || second.time));
+		return `<article class="schedule-day ${date.toDateString() === new Date().toDateString() ? "today" : ""}">
+			<header><span>${formatScheduleDate(date, { weekday: "long" })}</span><strong>${formatScheduleDate(date, { month: "short", day: "numeric" })}</strong></header>
+			<div class="schedule-day-items">${entries.map(entry => `<div class="schedule-entry">
+				<div class="schedule-entry-time">${formatScheduleTime(entry.startTime || entry.time)} - ${formatScheduleTime(entry.endTime || entry.startTime || entry.time)}</div><strong>${escapeHtml(entry.subject)}</strong>${entry.details ? `<span>${escapeHtml(entry.details)}</span>` : ""}
+				<div class="schedule-entry-actions"><button type="button" data-schedule-edit-id="${entry.id}">Edit</button><button type="button" data-schedule-remove-id="${entry.id}">Remove</button></div>
+			</div>`).join("") || '<p class="schedule-empty">No subjects</p>'}</div>
+		</article>`;
+	}).join("");
+}
+
+function openScheduleModal(entry) {
+	editingScheduleId = entry ? entry.id : null;
+	scheduleModalTitle.textContent = entry ? "Edit subject" : "Add subject";
+	saveScheduleButton.textContent = entry ? "Update subject" : "Save subject";
+	scheduleForm.reset();
+	const dates = getWeekDates();
+	document.getElementById("scheduleDate").value = entry ? toLocalDateValue(dates[entry.dayIndex]) : toLocalDateValue(dates[0]);
+	if (entry) {
+		document.getElementById("scheduleSubject").value = entry.subject;
+		document.getElementById("scheduleStartTime").value = entry.startTime || entry.time;
+		document.getElementById("scheduleEndTime").value = entry.endTime || entry.time;
+		document.getElementById("scheduleRoom").value = entry.details || "";
+	}
+	scheduleModal.classList.add("open");
+	scheduleModal.setAttribute("aria-hidden", "false");
+	setTimeout(() => document.getElementById("scheduleSubject").focus(), 50);
+}
+
+function closeScheduleModal() {
+	scheduleModal.classList.remove("open");
+	scheduleModal.setAttribute("aria-hidden", "true");
+	scheduleForm.reset();
+	editingScheduleId = null;
+}
+
+function openNavigationModal() {
+	renderNavigationOptions();
+	navigationModal.classList.add("open");
+	navigationModal.setAttribute("aria-hidden", "false");
+}
+
+function closeNavigationModal() {
+	navigationModal.classList.remove("open", "closing");
+	navigationModal.setAttribute("aria-hidden", "true");
+}
+
+function renderTodoList() {
+	todoList.innerHTML = todoEntries.map(entry => `<div class="todo-entry ${entry.done ? "done" : ""}"><label><input type="checkbox" data-todo-toggle="${entry.id}" ${entry.done ? "checked" : ""}><span>${escapeHtml(entry.text)}</span></label><button type="button" data-todo-remove="${entry.id}" aria-label="Remove task">Remove</button></div>`).join("") || '<div class="empty-state">No tasks yet.</div>';
+}
+
+function renderNotes() {
+	notesList.innerHTML = noteEntries.map(entry => `<article class="note-entry"><div><h3>${escapeHtml(entry.title)}</h3><p>${escapeHtml(entry.text)}</p></div><button type="button" data-note-remove="${entry.id}" aria-label="Remove note">Remove</button></article>`).join("") || '<div class="empty-state">No notes yet.</div>';
+}
+
 function renderTableView() {
 	const tableBody = document.getElementById("materialsTableBody");
+	if (!materials.length) {
+		tableBody.innerHTML = '<tr><td colspan="5" class="table-empty-state">No consumables yet. Add your first item from the Pantry tab.</td></tr>';
+		return;
+	}
 	tableBody.innerHTML = materials.map(item => `
 		<tr>
 			<td><span class="list-badge">${itemVisual(item, "list-badge")}<strong>${item.name}</strong></span></td>
@@ -245,28 +507,28 @@ function render() {
 			<h3>${item.name}</h3><span class="item-category">${item.category}</span>
 			<div class="item-footer"><div class="quantity" aria-label="${item.name} quantity"><button type="button" data-action="decrease" data-id="${item.id}" aria-label="Decrease ${item.name}">−</button><strong>${item.quantity}</strong><button type="button" data-action="increase" data-id="${item.id}" aria-label="Increase ${item.name}">+</button></div><span class="unit-price">${formatPeso(item.price)} / ${item.unit}</span></div>
 			<button type="button" class="remove-item-btn" data-remove-id="${item.id}" aria-label="Remove ${item.name}">Remove</button>
-		</article>`).join("");
+		</article>`).join("") || '<div class="empty-state">No consumables yet. Use Add material to create your first item.</div>';
 
 	document.getElementById("totalMaterials").textContent = materials.reduce((sum, item) => sum + item.quantity, 0);
-	document.getElementById("totalCategories").textContent = new Set(materials.map(item => item.category)).size;
 	document.getElementById("lowStock").textContent = materials.filter(item => item.quantity <= 5).length;
 	document.getElementById("electronicsTotal").textContent = electronicsItems.length;
 	document.getElementById("electronicsLowStock").textContent = electronicsItems.filter(item => item.stock <= 5).length;
-	electronicsDashboardList.innerHTML = electronicsItems.map(item => `
-		<div class="dashboard-electronics-item">
-			<span class="dashboard-electronics-name">${itemVisual(item, "dashboard-electronics-name")}<strong>${item.name}</strong></span>
-			<span class="dashboard-electronics-stock ${item.stock <= 5 ? "low" : ""}">${item.stock} ${item.unit}</span>
-		</div>
-	`).join("") || '<div class="empty-state">No electronics saved.</div>';
 	renderTableView();
 }
 
 function showPage(pageName) {
+	mainContent.classList.remove("page-transition");
+	void mainContent.offsetWidth;
+	mainContent.classList.add("page-transition");
 	appShell.classList.toggle("electronics-mode", pageName === "electronics");
+	appShell.classList.toggle("schedule-mode", pageName === "schedule");
 	overviewSection.hidden = pageName !== "overview";
 	pantrySection.classList.toggle("visible", pageName === "pantry");
 	allMaterialsPage.classList.toggle("visible", pageName === "all");
 	electronicsSection.classList.toggle("visible", pageName === "electronics");
+	scheduleSection.classList.toggle("visible", pageName === "schedule");
+	todoSection.classList.toggle("visible", pageName === "todo");
+	notesSection.classList.toggle("visible", pageName === "notes");
 	addItemButton.hidden = pageName !== "pantry";
 	addElectronicsButton.hidden = pageName !== "electronics";
 	pageDescription.textContent = pageName === "electronics"
@@ -275,11 +537,21 @@ function showPage(pageName) {
 			? "Adjust your pantry stock count with the controls on each item."
 			: pageName === "all"
 				? "Review every pantry item in your inventory."
-				: "See the current status of your pantry and electronics.";
+				: pageName === "schedule"
+					? "Keep your weekly subjects, times, and class details in one place."
+					: pageName === "todo"
+						? "Organize the tasks you need to finish."
+						: pageName === "notes"
+							? "Keep your important thoughts and reminders nearby."
+							: "See the current status of your pantry and electronics.";
 	sidebarButtons.forEach(button => {
 		button.classList.toggle("active", button.dataset.page === pageName);
 	});
+	applyNavigationColors();
 	document.querySelector(".summary-grid").style.display = pageName === "overview" ? "grid" : "none";
+	if (pageName === "schedule") renderSchedule();
+	if (pageName === "todo") renderTodoList();
+	if (pageName === "notes") renderNotes();
 }
 
 function renderElectronics() {
@@ -336,17 +608,63 @@ grid.addEventListener("click", event => {
 	render();
 });
 
-document.querySelectorAll(".view-btn").forEach(button => {
-	button.addEventListener("click", () => {
-		document.querySelectorAll(".view-btn").forEach(item => item.classList.toggle("active", item === button));
-		allMaterialsPage.classList.toggle("list-view", button.dataset.view === "list");
-	});
-});
-
 sidebarButtons.forEach(button => {
 	button.addEventListener("click", () => {
 		showPage(button.dataset.page);
 	});
+});
+
+navigationManagerButton.addEventListener("click", openNavigationModal);
+document.getElementById("closeNavigationModalButton").addEventListener("click", closeNavigationModal);
+document.getElementById("closeNavigationDoneButton").addEventListener("click", closeNavigationModal);
+navigationModal.addEventListener("click", event => {
+	if (event.target === navigationModal) closeNavigationModal();
+});
+navigationOptions.addEventListener("change", event => {
+	const colorInput = event.target.closest("[data-navigation-color]");
+	if (colorInput) {
+		navigationColors[colorInput.dataset.navigationColor] = colorInput.value;
+		saveNavigationColors();
+		applyNavigationColors();
+		return;
+	}
+	const checkbox = event.target.closest("[data-navigation-page]");
+	if (!checkbox) return;
+	const pageId = checkbox.dataset.navigationPage;
+	if (!checkbox.checked && visibleNavigationPages.length === 1) {
+		checkbox.checked = true;
+		return;
+	}
+	visibleNavigationPages = checkbox.checked
+		? [...visibleNavigationPages, pageId]
+		: visibleNavigationPages.filter(id => id !== pageId);
+	saveVisibleNavigationPages();
+	applyNavigationVisibility();
+	const activePage = document.querySelector(".side-nav button.active")?.dataset.page;
+	if (!visibleNavigationPages.includes(activePage)) {
+		if (!visibleNavigationPages.includes("overview")) visibleNavigationPages.unshift("overview");
+		saveVisibleNavigationPages();
+		applyNavigationVisibility();
+		showPage("overview");
+	}
+});
+
+greetingName.addEventListener("keydown", event => {
+	if (event.key === "Enter") {
+		event.preventDefault();
+		greetingName.blur();
+	}
+});
+
+greetingName.addEventListener("blur", () => {
+	const customName = greetingName.textContent.trim().replace(/\s+/g, " ");
+	if (customName) {
+		greetingName.textContent = customName;
+		localStorage.setItem(GREETING_STORAGE_KEY, customName);
+	} else {
+		localStorage.removeItem(GREETING_STORAGE_KEY);
+		greetingName.textContent = "Engr.";
+	}
 });
 
 electronicsSearch.addEventListener("input", renderElectronics);
@@ -378,6 +696,105 @@ electronicsGrid.addEventListener("click", event => {
 	if (target.dataset.electronicsAction === "decrease" && item.stock > 0) item.stock -= 1;
 	saveElectronics();
 	renderElectronics();
+});
+
+document.getElementById("addScheduleButton").addEventListener("click", () => openScheduleModal());
+document.getElementById("closeScheduleModalButton").addEventListener("click", closeScheduleModal);
+document.getElementById("cancelScheduleButton").addEventListener("click", closeScheduleModal);
+scheduleModal.addEventListener("click", event => {
+	if (event.target === scheduleModal) closeScheduleModal();
+});
+
+scheduleWeek.addEventListener("click", event => {
+	const editButton = event.target.closest("[data-schedule-edit-id]");
+	if (editButton) {
+		const entry = scheduleEntries.find(item => item.id === Number(editButton.dataset.scheduleEditId));
+		if (entry) openScheduleModal(entry);
+		return;
+	}
+	const removeButton = event.target.closest("[data-schedule-remove-id]");
+	if (removeButton) {
+		scheduleEntries = scheduleEntries.filter(item => item.id !== Number(removeButton.dataset.scheduleRemoveId));
+		saveSchedule();
+		renderSchedule();
+	}
+});
+
+scheduleForm.addEventListener("submit", event => {
+	event.preventDefault();
+	const formData = new FormData(scheduleForm);
+	const subject = String(formData.get("subject") || "").trim();
+	const dateValue = String(formData.get("date") || "");
+	const startTime = String(formData.get("startTime") || "");
+	const endTime = String(formData.get("endTime") || "");
+	const details = String(formData.get("details") || "").trim();
+	const selectedDate = new Date(`${dateValue}T00:00:00`);
+	const dayIndex = (selectedDate.getDay() + 6) % 7;
+
+	if (!subject || !dateValue || !startTime || !endTime || endTime <= startTime || Number.isNaN(selectedDate.getTime())) {
+		alert("Please enter a valid time-in and time-out. Time out must be later than time in.");
+		return;
+	}
+
+	if (editingScheduleId) {
+		const entry = scheduleEntries.find(item => item.id === editingScheduleId);
+		if (entry) Object.assign(entry, { subject, dayIndex, startTime, endTime, details });
+	} else {
+		scheduleEntries.push({ id: Date.now(), subject, dayIndex, startTime, endTime, details });
+	}
+	saveSchedule();
+	closeScheduleModal();
+	renderSchedule();
+});
+
+document.getElementById("todoForm").addEventListener("submit", event => {
+	event.preventDefault();
+	const input = document.getElementById("todoInput");
+	const text = input.value.trim();
+	if (!text) return;
+	todoEntries.push({ id: Date.now(), text, done: false });
+	saveStoredList(TODO_STORAGE_KEY, todoEntries);
+	input.value = "";
+	renderTodoList();
+});
+
+todoList.addEventListener("click", event => {
+	const toggle = event.target.closest("[data-todo-toggle]");
+	if (toggle) {
+		const entry = todoEntries.find(item => item.id === Number(toggle.dataset.todoToggle));
+		if (entry) entry.done = toggle.checked;
+		saveStoredList(TODO_STORAGE_KEY, todoEntries);
+		renderTodoList();
+		return;
+	}
+	const remove = event.target.closest("[data-todo-remove]");
+	if (remove) {
+		todoEntries = todoEntries.filter(item => item.id !== Number(remove.dataset.todoRemove));
+		saveStoredList(TODO_STORAGE_KEY, todoEntries);
+		renderTodoList();
+	}
+});
+
+document.getElementById("noteForm").addEventListener("submit", event => {
+	event.preventDefault();
+	const titleInput = document.getElementById("noteTitle");
+	const textInput = document.getElementById("noteText");
+	const title = titleInput.value.trim();
+	const text = textInput.value.trim();
+	if (!title || !text) return;
+	noteEntries.unshift({ id: Date.now(), title, text });
+	saveStoredList(NOTES_STORAGE_KEY, noteEntries);
+	titleInput.value = "";
+	textInput.value = "";
+	renderNotes();
+});
+
+notesList.addEventListener("click", event => {
+	const remove = event.target.closest("[data-note-remove]");
+	if (!remove) return;
+	noteEntries = noteEntries.filter(item => item.id !== Number(remove.dataset.noteRemove));
+	saveStoredList(NOTES_STORAGE_KEY, noteEntries);
+	renderNotes();
 });
 
 document.getElementById("addElectronicsButton").addEventListener("click", openElectronicsModal);
@@ -430,7 +847,17 @@ addElectronicsForm.addEventListener("submit", async event => {
 	render();
 });
 
-materialCategory.addEventListener("change", fillCustomCategory);
+materialCategory.addEventListener("input", renderCategorySuggestions);
+materialCategory.addEventListener("focus", renderCategorySuggestions);
+categorySuggestions.addEventListener("click", event => {
+	const option = event.target.closest("[data-category-value]");
+	if (!option) return;
+	materialCategory.value = option.dataset.categoryValue;
+	categorySuggestions.classList.remove("open");
+});
+document.addEventListener("click", event => {
+	if (!event.target.closest(".category-picker")) categorySuggestions.classList.remove("open");
+});
 
 document.getElementById("addItemButton").addEventListener("click", openMaterialModal);
 document.getElementById("closeModalButton").addEventListener("click", closeMaterialModal);
@@ -495,9 +922,12 @@ addMaterialForm.addEventListener("submit", async event => {
 });
 
 showPage("overview");
+applyNavigationVisibility();
+applyNavigationColors();
 populateCategoryOptions();
 updateHeaderClock();
 setInterval(updateHeaderClock, 1000);
+setInterval(renderSchedule, 60 * 1000);
 renderElectronics();
 render();
 
@@ -506,3 +936,8 @@ if ("serviceWorker" in navigator) {
 		console.warn("Service worker registration failed.", error);
 	});
 }
+
+window.addEventListener("pagehide", saveAllData);
+document.addEventListener("visibilitychange", () => {
+	if (document.visibilityState === "hidden") saveAllData();
+});
